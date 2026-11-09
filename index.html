@@ -27,7 +27,7 @@
     })();
     </script>
 
-    <link rel="stylesheet" href="style.css?v=12">
+    <link rel="stylesheet" href="style.css?v=14">
 </head>
 <body>
 
@@ -200,7 +200,7 @@
                 <div class="set-title">حساب‌ها</div>
                 <div class="set-group">
                     <div id="account-list"></div>
-                    <button type="button" class="set-row" onclick="document.getElementById('add-account-modal').classList.add('show')">
+                    <button type="button" class="set-row" onclick="openSignup()">
                         <span class="set-ic c-blue"><svg><use href="#i-user"/></svg></span>
                         <span class="set-label">افزودن اکانت جدید</span>
                         <svg class="set-chev"><use href="#i-back"/></svg>
@@ -444,5 +444,7 @@
 
 <script src="script.js?v=12"></script>
 <script src="features.js"></script>
+<script src="flags.js"></script>
+<script src="auth.js"></script>
 </body>
 </html>
