@@ -169,16 +169,54 @@ function blocksSheet() {
 // ============================================================
 function renderFxSettings() {
     let s = $('fx-settings');
-    if (!s) { s = document.createElement('div'); s.id = 'fx-settings'; s.className = 'settings-section'; s.style.paddingTop = '8px'; document.querySelector('#view-settings .settings-section').after(s); }
+    if (!s) { s = document.createElement('div'); s.id = 'fx-settings'; (document.querySelector('#view-settings .set-page') || $('view-settings')).appendChild(s); }
     const u = state.user;
-    s.innerHTML = `<h3 style="margin-bottom: 12px; font-size: 18px; font-weight: 800;">حریم خصوصی و مدیریت</h3>
-        <div class="fx-box"><div class="switch-row" style="margin-top:0">
-            <div><div class="fx-t">حساب خصوصی</div><div class="fx-d">فقط دنبال‌کننده‌های تأییدشده ویراست‌های ${esc(u.handle)} را می‌بینند</div></div>
-            <label class="switch"><input type="checkbox" ${u.isPrivate ? 'checked' : ''} onchange="fxR(${reg(v => { u.isPrivate = v; save(); showToast(v ? 'حساب شما خصوصی شد' : 'حساب شما عمومی شد', 'info'); })},this.checked)"><span class="slider"></span></label>
-        </div></div>
-        <button type="button" class="fx-action" onclick="fxR(${reg(blocksSheet)})"><svg><use href="#i-ban"/></svg> بلاک‌ها و میوت‌ها</button>
-        ${isAdmin() ? `<button type="button" class="fx-action" onclick="fxR(${reg(adminPanel)})"><svg><use href="#i-settings"/></svg> پنل مدیریت</button>` : ''}
-        <div class="fx-role"><span>نقش این حساب</span><span class="fx-chip">${isAdmin() ? 'مدیر' : 'کاربر عادی'}</span></div>`;
+    const chev = '<svg class="set-chev"><use href="#i-back"/></svg>';
+    s.innerHTML = `<div class="set-block">
+        <div class="set-title">حریم خصوصی و امنیت</div>
+        <div class="set-group">
+            <div class="set-row static">
+                <span class="set-ic c-green"><svg><use href="#i-user"/></svg></span>
+                <div class="set-label">حساب خصوصی<small>فقط دنبال‌کننده‌های تأییدشده ویراست‌های ${esc(u.handle)} را می‌بینند</small></div>
+                <label class="switch"><input type="checkbox" ${u.isPrivate ? 'checked' : ''} onchange="fxR(${reg(v => { u.isPrivate = v; save(); showToast(v ? 'حساب شما خصوصی شد' : 'حساب شما عمومی شد', 'info'); })},this.checked)"><span class="slider"></span></label>
+            </div>
+            <button type="button" class="set-row" onclick="fxR(${reg(blocksSheet)})">
+                <span class="set-ic c-red"><svg><use href="#i-ban"/></svg></span>
+                <span class="set-label">بلاک‌ها و میوت‌ها</span>${chev}
+            </button>
+        </div>
+    </div>
+    <div class="set-block">
+        <div class="set-title">${isAdmin() ? 'مدیریت' : 'نقش'}</div>
+        <div class="set-group">
+            ${isAdmin() ? `<button type="button" class="set-row" onclick="fxR(${reg(adminPanel)})">
+                <span class="set-ic c-orange"><svg><use href="#i-settings"/></svg></span>
+                <span class="set-label">پنل مدیریت</span>${chev}
+            </button>` : ''}
+            <div class="set-row static">
+                <span class="set-ic c-gray"><svg><use href="#i-user"/></svg></span>
+                <span class="set-label">نقش این حساب</span>
+                <span class="set-value">${isAdmin() ? 'مدیر' : 'کاربر عادی'}</span>
+            </div>
+        </div>
+    </div>`;
+}
+
+// ---------- تم برنامه (خودکار / روشن / تیره) ----------
+{
+    const KEY = 'virasty_theme';
+    const get = () => { try { return localStorage.getItem(KEY) || 'dark'; } catch (e) { return 'dark'; } };
+    const mark = () => document.querySelectorAll('#theme-seg button').forEach(b => b.classList.toggle('on', b.dataset.mode === get()));
+    document.querySelectorAll('#theme-seg button').forEach(b => b.addEventListener('click', () => {
+        try { localStorage.setItem(KEY, b.dataset.mode); } catch (e) {}
+        window.applyTheme(b.dataset.mode); mark();
+    }));
+    if (window.matchMedia) {
+        const mq = matchMedia('(prefers-color-scheme: light)');
+        const onChange = () => { if (get() === 'auto') window.applyTheme('auto'); };
+        mq.addEventListener ? mq.addEventListener('change', onChange) : mq.addListener && mq.addListener(onChange);
+    }
+    mark();
 }
 window.fxUnban = h => { state.bannedUsers = state.bannedUsers.filter(x => x !== h); save(); showToast(`بن ${h} برداشته شد`, 'success'); renderFeeds(); if ($('view-user-profile').classList.contains('active')) openUserProfile(h); };
 function adminPanel() {
@@ -729,19 +767,59 @@ function syncChat(h) {
 // ترندها (۸)
 // ============================================================
 const SEED_TAGS = ['ویراستی', 'خبر_فوری', 'تکنولوژی', 'ورزش', 'موسیقی', 'فیلم_و_سریال', 'هوش_مصنوعی', 'آموزش'];
-function renderTrends() {
-    const box = $('search-results'); if (!box) return;
-    const day = Math.floor(Date.now() / 864e5), hash = t => [...t].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7), map = new Map();
-    SEED_TAGS.forEach(t => map.set(norm(t), { tag: '#' + t, n: 40 + hash(t + day) % 900 }));
-    all().filter(p => fxVisible(p, true)).forEach(p => {
+const TAG_RE = /(^|\s)#[\w\u0622-\u06CC\u06F0-\u06F9\u200c]+/g;
+const HOUR = 36e5;
+let trendTab = 'tags';
+const statN = v => parseStatNum(v);
+const engagement = p => { const s = p.stats || {}; return statN(s.likes) + 2 * statN(s.retweets) + 1.5 * statN(s.replies) + 0.1 * statN(s.views); };
+const compact = n => n >= 1e6 ? (n / 1e6).toFixed(1).replace(/\.0$/, '') .replace('.', '٫').replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]) + ' میلیون'
+    : n >= 1e3 ? (n / 1e3).toFixed(1).replace(/\.0$/, '').replace('.', '٫').replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]) + ' هزار' : n.toLocaleString('fa-IR');
+
+// هشتگ‌های ترند: بر اساس تعداد استفاده در ۴۸ ساعت اخیر + میزان تعامل پست‌ها
+function trendingTags() {
+    const now = Date.now(), day = Math.floor(now / 864e5), hash = t => [...t].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+    const map = new Map(), posts = all().filter(p => fxVisible(p, true));
+    posts.forEach(p => {
+        const age = (now - (p.ts || now)) / HOUR; if (age > 48) return;
         const seen = new Set();
-        (String(p.text || '').match(/(^|\s)#[\w\u0622-\u06CC\u06F0-\u06F9\u200c]+/g) || []).forEach(m => {
+        (String(p.text || '').match(TAG_RE) || []).forEach(m => {
             const tag = m.trim(), k = norm(tag.slice(1)); if (seen.has(k)) return; seen.add(k);
-            const e = map.get(k) || { tag, n: 0 }; e.n += 50; map.set(k, e);
+            const e = map.get(k) || { tag, uses: 0, eng: 0, score: 0, seed: false };
+            e.uses++; e.eng += engagement(p);
+            e.score += (100 + Math.log10(1 + engagement(p)) * 20) / Math.pow(age + 2, 0.5);
+            map.set(k, e);
         });
     });
-    const l = [...map.values()].sort((a, b) => b.n - a.n).slice(0, 10);
-    box.innerHTML = '<div class="fx-trends"><h3>ترندهای ویراستی</h3>' + l.map((t, i) => `<div class="fx-trend" onclick="openHashtag(decodeURIComponent('${enc(t.tag)}'))"><span class="fx-rank">${(i + 1).toLocaleString('fa-IR')}</span><div><div class="fx-th">${esc(t.tag)}</div><div class="fx-tc">${t.n.toLocaleString('fa-IR')} ویراست</div></div></div>`).join('') + '</div>';
+    // پر کردن با هشتگ‌های پیشنهادی وقتی هشتگ واقعی کم است
+    SEED_TAGS.forEach(t => {
+        const k = norm(t), base = 40 + hash(t + day) % 900, e = map.get(k);
+        if (e) { e.uses += base; e.score += base; }
+        else map.set(k, { tag: '#' + t, uses: base, eng: 0, score: base, seed: true });
+    });
+    return [...map.values()].sort((a, b) => b.score - a.score).slice(0, 10);
+}
+
+// ویراست‌های ترند: امتیاز تعامل تقسیم بر سن پست (هر چه تازه‌تر و پرتعامل‌تر، بالاتر)
+function trendingPosts() {
+    const now = Date.now();
+    return all().filter(p => !p.replyTo && fxVisible(p, true))
+        .map(p => ({ p, s: engagement(p) / Math.pow((now - (p.ts || now)) / HOUR + 2, 1.1) }))
+        .filter(x => x.s > 0).sort((a, b) => b.s - a.s).slice(0, 10).map(x => x.p);
+}
+
+window.fxTrendTab = t => { trendTab = t; renderTrends(); };
+function renderTrends() {
+    const box = $('search-results'); if (!box) return;
+    const tabs = `<div class="fx-trend-tabs"><button type="button" class="${trendTab === 'tags' ? 'active' : ''}" onclick="fxTrendTab('tags')">هشتگ‌های ترند</button><button type="button" class="${trendTab === 'posts' ? 'active' : ''}" onclick="fxTrendTab('posts')">ویراست‌های ترند</button></div>`;
+    let body;
+    if (trendTab === 'tags') {
+        body = '<div class="fx-trends">' + trendingTags().map((t, i) =>
+            `<div class="fx-trend" onclick="openHashtag(decodeURIComponent('${enc(t.tag)}'))"><span class="fx-rank">${(i + 1).toLocaleString('fa-IR')}</span><div><div class="fx-th">${esc(t.tag)}</div><div class="fx-tc">${t.uses.toLocaleString('fa-IR')} ویراست${t.eng ? ' · ' + compact(Math.round(t.eng)) + ' تعامل' : ''}</div></div></div>`).join('') + '</div>';
+    } else {
+        const l = trendingPosts();
+        body = l.length ? l.map((p, i) => `<div class="fx-trend-post"><div class="fx-trend-label"><span class="fx-rank">${(i + 1).toLocaleString('fa-IR')}</span> در ترند</div>${createPostHTML(p)}</div>`).join('') : emptyHTML('هنوز ویراست ترندی نیست');
+    }
+    box.innerHTML = tabs + body;
 }
 
 // ============================================================
@@ -757,5 +835,6 @@ window.switchView = function (v) {
     updBadges();
 };
 document.querySelectorAll('.nav-item')[2].insertAdjacentHTML('beforeend', '<span id="notif-badge" class="nav-badge" style="display:none">0</span>');
+{ const orf = window.renderFeeds; window.renderFeeds = function () { orf.apply(this, arguments); if ($('view-search').classList.contains('active') && !si.value.trim()) renderTrends(); }; }
 updCnt(); renderFeeds(); renderTrends();
 })();
