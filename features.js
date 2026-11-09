@@ -230,8 +230,9 @@ window.openPostOptions = function (e, id) {
         it.push({ t: ic('ban') + 'بلاک ' + esc(p.handle), d: 1, f: () => fxBlock(p.handle) });
         it.push({ t: ic('close') + 'میوت ' + esc(p.handle), f: () => fxMute(p.handle) });
         if (ad) {
-            if (!p.badgeType) ['blue', 'yellow', 'green', 'personal'].forEach(b => it.push({ t: `${getBadgeHTML(b)} دادن ${BADGE_TYPES[b].title}`, f: () => giveBadge(p.id, b) }));
-            else it.push({ t: `${getBadgeHTML(p.badgeType)} حذف نشان فعلی`, f: () => removeBadge(p.id) });
+            if (!splitBadge(p.badgeType).tick) ['blue', 'yellow', 'green', 'personal'].forEach(b => it.push({ t: `${getBadgeHTML(b)} دادن ${BADGE_TYPES[b].title}`, f: () => giveBadge(p.id, b) }));
+            else it.push({ t: `${getBadgeHTML(splitBadge(p.badgeType).tick)} حذف نشان فعلی`, f: () => removeBadge(p.id) });
+            it.push({ t: `${getBadgeHTML('star')} ${isPremiumBadge(p.badgeType) ? 'برداشتن کاربر ویژه' : 'فعال‌کردن کاربر ویژه'}`, f: () => toggleStar(p.id) });
             it.push({ t: ic('trash') + 'حذف ویراست (مدیر)', d: 1, f: () => deletePost(p.id) });
             it.push({ t: ic('alert') + 'اخطار به ارسال‌کننده', f: () => openWarnModal(p.id) });
             it.push({ t: ic('ban') + 'بن اکانت', d: 1, f: () => banUser(p.id) });
@@ -244,9 +245,15 @@ window.openPostOptions = function (e, id) {
 // ============================================================
 // نوشتن پست: چندتصویری، شمارنده، پیش‌نویس، ویرایش، نقل‌قول (۱۶، ۱۹، ۲۰، ۲۳، ۲۴، ۳)
 // ============================================================
-const ta = $('compose-text'); ta.maxLength = 280; $('upload-image').multiple = true;
+const ta = $('compose-text'); $('upload-image').multiple = true;
+const fxLim = () => postCharLimit(editingPostId ? state.user : (composeSelectedAccount || state.user));
+ta.maxLength = fxLim();
 const cnt = document.createElement('span'); cnt.id = 'fx-counter'; $('compose-modal').querySelector('.compose-footer').appendChild(cnt);
-const updCnt = () => { const n = ta.value.length; cnt.textContent = `${n.toLocaleString('fa-IR')}/${(280).toLocaleString('fa-IR')}`; cnt.className = n > 260 ? 'warn' : ''; };
+const updCnt = () => { const n = ta.value.length, L = fxLim(); cnt.textContent = `${n.toLocaleString('fa-IR')}/${L.toLocaleString('fa-IR')}`; cnt.className = n > L - 20 ? 'warn' : ''; };
+{ // با عوض‌شدن اکانت نویسنده، سقف کاراکتر هم عوض شود (۲۸۰ یا ۵۰۰)
+    const ouc = window.updateComposeUI;
+    window.updateComposeUI = function () { const r = ouc.apply(this, arguments); ta.maxLength = fxLim(); updCnt(); return r; };
+}
 const dk = () => 'viraasti_draft_' + me();
 let dt; ta.addEventListener('input', () => { updCnt(); if (editingPostId) return; clearTimeout(dt); dt = setTimeout(() => { try { ta.value.trim() ? localStorage.setItem(dk(), ta.value) : localStorage.removeItem(dk()); } catch (e) {} }, 400); });
 const qp = document.createElement('div'); qp.id = 'fx-quote-prev'; document.querySelector('#compose-modal .compose-input-wrapper').after(qp);
@@ -273,7 +280,7 @@ document.addEventListener('change', e => {
 
 $('btn-compose').addEventListener('click', () => {
     if ($('view-messages').classList.contains('active')) return;
-    tempPostImage = null; tempImages = []; composeQuote = null; renderPrev(); renderQuote(); ta.maxLength = 280;
+    tempPostImage = null; tempImages = []; composeQuote = null; renderPrev(); renderQuote(); ta.maxLength = fxLim();
     const d = localStorage.getItem(dk());
     if (d) { ta.value = d; updateComposeHighlight(); showToast('پیش‌نویس قبلی بازیابی شد', 'info'); }
     updCnt();
@@ -303,6 +310,7 @@ function closeCompose() { $('compose-modal').classList.remove('show'); tempImage
 { // جایگزینی دکمه‌ی ارسال
     const old = $('btn-submit-post'), nb = old.cloneNode(true); old.replaceWith(nb);
     nb.addEventListener('click', () => {
+        if (ta.value.length > fxLim()) { showToast(`حداکثر ${fxLim().toLocaleString('fa-IR')} کاراکتر مجاز است.`, 'error'); return; }
         const text = ta.value.trim();
         if (editingPostId) {
             const p = state.posts.find(x => x.id === editingPostId); if (!p) return;
@@ -393,7 +401,7 @@ window.renderPostDetail = function (id) {
         <button type="button" class="action-btn retweet-btn ${p.retweeted ? 'retweeted' : ''}" onclick="toggleAction(event,'${p.id}','retweet')"><svg><use href="#i-retweet"/></svg> ${formatStatDisplay(p.stats.retweets)}</button>
         <button type="button" class="action-btn like-btn ${p.liked ? 'liked' : ''}" onclick="toggleAction(event,'${p.id}','like')"><svg><use href="#i-heart"/></svg> ${formatStatDisplay(p.stats.likes)}</button>
         <button type="button" class="action-btn bookmark-btn ${p.bookmarked ? 'bookmarked' : ''}" onclick="toggleAction(event,'${p.id}','bookmark')"><svg><use href="#i-bookmark"/></svg></button></div>
-        <div class="fx-reply-box"><textarea id="fx-reply-text" rows="2" maxlength="280" placeholder="پاسخ خود را بنویسید..."></textarea><button type="button" class="btn-primary" onclick="submitReply('${p.id}')">پاسخ</button></div>
+        <div class="fx-reply-box"><textarea id="fx-reply-text" rows="2" maxlength="${postCharLimit(state.user)}" placeholder="پاسخ خود را بنویسید..."></textarea><button type="button" class="btn-primary" onclick="submitReply('${p.id}')">پاسخ</button></div>
         <div>${replies.length ? replies.map(createPostHTML).join('') : '<div class="fx-empty">هنوز پاسخی نیست</div>'}</div>`);
     if (keep) { const n = $('fx-reply-text'); n.value = keep.v; if (keep.f) n.focus(); }
 };
@@ -659,8 +667,9 @@ function warnData(m) {
     return b ? { author: a ? a[1] : '', preview: b[1], reason: b[2] } : null;
 }
 function warnCard(d, from) {
-    return `<div class="fx-wc"><div class="fx-wc-h"><svg><use href="#i-alert"/></svg><b>اخطار</b><span>از ${esc(from || 'پشتیبانی')}</span></div>
-        <div class="fx-wc-post">${esc(d.preview)}</div><div class="fx-wc-r">دلیل: <b>${esc(d.reason)}</b></div></div>`;
+    return `<div class="fx-wc"><div class="fx-wc-ic"><svg><use href="#i-alert"/></svg></div><div class="fx-wc-m">
+        <div class="fx-wc-h"><b>اخطار</b><span>از ${esc(from || 'پشتیبانی')}</span></div>
+        <div class="fx-wc-post">${esc(d.preview)}</div><span class="fx-wc-r">${esc(d.reason)}</span></div></div>`;
 }
 function warnText(p, reason) {
     const pv = warnPv(p);
@@ -678,7 +687,7 @@ function warnText(p, reason) {
 function warnRefresh() {
     const p = find(currentWarnPostId), w = warnerInfo(), r = $('warn-reason').value.trim(); if (!p || !w) return;
     const who = i => `<span class="fx-p"><img src="${i.avatar || DEFAULT_AVATAR}" alt=""><b>${esc(i.name)}</b></span>`;
-    $('fx-warn-flow').innerHTML = `<div class="fx-flow"><span class="fx-k">از</span>${who(w)}<span class="fx-k">به</span>${who({ name: p.author, avatar: p.avatar })}</div>`;
+    $('fx-warn-flow').innerHTML = `<div class="fx-flow">${who(w)}<span class="fx-ar">←</span>${who({ name: p.author, avatar: p.avatar })}</div>`;
     document.querySelectorAll('#fx-warn-chips button').forEach(b => b.classList.toggle('on', WARN_REASONS[b.dataset.i] === r));
     $('fx-warn-prev').innerHTML = warnCard({ author: p.author, preview: warnPv(p), reason: r || '...' }, w.name);
     const same = w.handle === p.handle;
