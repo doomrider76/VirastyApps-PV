@@ -31,7 +31,7 @@
     color-scheme: dark;
     --font-family: 'CustomFont', sans-serif;
     
-    --header-height: 58px; 
+    --header-height: 56px; 
     --nav-height: 58px;
     /* فاصله منوهای بالا از لب بالای صفحه: صفر مطلق، کاملاً چسبیده */
     --menu-gap: 1px; /* فاصله‌ی منوی اول با دومی */
@@ -779,9 +779,11 @@ button.set-row:active { background: var(--w05); }
     box-shadow: none !important;
 }
 
-/* منوی پایین: هم‌اندازه‌ی منوهای بالا (تمام‌عرض و هم‌ارتفاع) */
+/* منوی پایین: دقیقاً همان اندازه‌ی اولیه (۱۴px از چپ/راست، ارتفاع ۵۸px) */
 .bottom-nav {
-    left: 0 !important;
-    right: 0 !important;
-    height: var(--header-height) !important;
+    left: 14px !important;
+    right: 14px !important;
+    bottom: 12px !important;
+    height: 58px !important;
+    padding: 6px 8px !important;
 }
