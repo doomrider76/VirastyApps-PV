@@ -1504,7 +1504,7 @@ function switchView(viewName) {
     if(target) { target.classList.add('active'); target.scrollTop = 0; }
     
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    const navIndex = ['home', 'search', 'notifications', 'messages', 'bookmarks', 'profile'].indexOf(viewName);
+    const navIndex = ['home', 'search', 'notifications', 'messages', 'bookmarks'].indexOf(viewName);
     if (navIndex !== -1) document.querySelectorAll('.nav-item')[navIndex].classList.add('active');
     
     const topTabs = document.getElementById('home-tabs-container');
