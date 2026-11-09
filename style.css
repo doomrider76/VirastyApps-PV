@@ -744,3 +744,15 @@ button.set-row:active { background: var(--w05); }
 .fx-trend-label{display:flex;align-items:center;gap:8px;padding:10px 16px 0;font-size:13px;font-weight:700;color:var(--text-secondary)}
 .fx-trend-label .fx-rank{width:24px;height:24px;border-radius:8px;font-size:12px}
 .fx-trend-post{border-bottom:1px solid var(--border-color)}
+
+/* ===== منوی بالا: کپسولی کامل مثل منوی پایین، چسبیده به لبه‌ی بالا ===== */
+.top-header, .floating-sub-header {
+    top: 0 !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    height: var(--header-height) !important;
+    border-radius: 999px !important;
+    border: 1px solid var(--glass-border) !important;
+    border-top-color: rgba(255, 255, 255, 0.2) !important;
+}
