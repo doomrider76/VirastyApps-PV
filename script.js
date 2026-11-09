@@ -1518,7 +1518,7 @@ function switchView(viewName) {
         if(fab) fab.style.display = 'none';
         if(bottomNav) bottomNav.style.display = 'none';
     } else {
-        if(bottomNav) bottomNav.style.display = 'flex';
+        if(bottomNav) bottomNav.style.display = (viewName === 'settings') ? 'none' : 'flex';
         
         if (viewName !== 'home') {
             if(header) header.style.display = 'none';
