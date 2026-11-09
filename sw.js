@@ -1,4 +1,4 @@
-const CACHE_NAME = 'Virasty-v1.1.5'; 
+const CACHE_NAME = 'Virasty-v1.1.6'; 
 
 const ASSETS = [
   './',
@@ -6,6 +6,8 @@ const ASSETS = [
   './features.js',
   './style.css',
   './script.js',
+  './auth.js',
+  './flags.js',
   './manifest.json',
   './Logo.png',
   './blue-tick.png',
