@@ -146,12 +146,43 @@ const BADGE_TYPES = {
     'personal': { src: 'personal-tick.png', title: 'نشان شخصی' }
 };
 
+// ========================
+// ⭐ کاربر ویژه (ستاره)
+// ========================
+// ستاره داخل همان فیلد badgeType ذخیره می‌شود تا همه‌ی جاهایی که badgeType را کپی می‌کنند
+// (ویراست، پاسخ، پیام، اکانت‌ها) خودکار ستاره را هم داشته باشند. مقدارهای ممکن:
+// 'blue' | 'blue+star' | 'star' | null
+const PREMIUM_CHAR_LIMIT = 500;
+const NORMAL_CHAR_LIMIT = 280;
+const STAR_SRC = 'star.png';
+const STAR_TITLE = 'کاربر ویژه';
+
+function splitBadge(bt) {
+    const parts = String(bt || '').split('+');
+    return { tick: parts.find(p => BADGE_TYPES[p]) || null, star: parts.includes('star') };
+}
+function joinBadge(tick, star) {
+    const a = [];
+    if (tick && BADGE_TYPES[tick]) a.push(tick);
+    if (star) a.push('star');
+    return a.length ? a.join('+') : null;
+}
+function isPremiumBadge(bt) { return splitBadge(bt).star; }
+function postCharLimit(acc) { return isPremiumBadge(acc && acc.badgeType) ? PREMIUM_CHAR_LIMIT : NORMAL_CHAR_LIMIT; }
+
 function getBadgeHTML(badgeType, size = '') {
     if (!badgeType) return '';
-    const b = BADGE_TYPES[badgeType];
-    if (!b) return '';
+    const { tick, star } = splitBadge(badgeType);
     const sizeClass = size ? ` ${size}` : '';
-    return `<img src="${b.src}" class="verified-icon${sizeClass}" alt="${b.title}" title="${b.title}">`;
+    let html = '';
+    if (tick) {
+        const b = BADGE_TYPES[tick];
+        html += `<img src="${b.src}" class="verified-icon${sizeClass}" alt="${b.title}" title="${b.title}">`;
+    }
+    if (star) {
+        html += `<img src="${STAR_SRC}" class="verified-icon star-icon${sizeClass}" alt="${STAR_TITLE}" title="${STAR_TITLE}">`;
+    }
+    return html;
 }
 
 function migrateBadge(obj) {
@@ -159,13 +190,108 @@ function migrateBadge(obj) {
     if (obj.isVerified && !obj.badgeType) {
         obj.badgeType = 'blue';
     }
-    if (!obj.badgeType) {
-        obj.isVerified = false;
-    } else {
-        obj.isVerified = true;
-    }
+    obj.isVerified = !!splitBadge(obj.badgeType).tick;
     return obj;
 }
+
+// ========================
+// 🎯 جای عمودی تیک و ستاره بر اساس آخرین حرف اسم
+// ========================
+// عدد = وسط بصری حرفِ آخر، بر حسب em بالای خط پایه (baseline). منفی یعنی زیر خط پایه.
+// اگر روی فونت شما کمی بالا/پایین بود فقط همین عددها را کم‌وزیاد کنید.
+const BADGE_LETTER_CENTER = {
+    'ا': .40, 'آ': .50, 'أ': .45, 'إ': .35, 'ل': .40, 'ک': .40, 'ك': .40, 'گ': .42, 'ط': .38, 'ظ': .42,
+    'ب': .06, 'پ': 0, 'ت': .25, 'ث': .30, 'ن': .02, 'ی': -.10, 'ي': -.10, 'ئ': 0,
+    'د': .18, 'ذ': .27, 'ر': .03, 'ز': .12, 'ژ': .15, 'و': .02, 'ؤ': .10,
+    'م': -.03, 'ه': .22, 'ة': .22, 'ھ': .22,
+    'س': .08, 'ش': .17, 'ص': .10, 'ض': .18, 'ع': -.05, 'غ': 0, 'ف': .15, 'ق': .02,
+    'ج': -.12, 'چ': -.15, 'ح': -.05, 'خ': .05
+};
+function letterCenterEm(ch) {
+    if (!ch) return null;
+    if (BADGE_LETTER_CENTER[ch] !== undefined) return BADGE_LETTER_CENTER[ch];
+    if (/[a-z]/.test(ch)) return /[bdfhklt]/.test(ch) ? .35 : (/[gjpqy]/.test(ch) ? .12 : .25);
+    if (/[A-Z0-9۰-۹٠-٩]/.test(ch)) return .35;
+    return null; // ایموجی، علامت و ... → ظاهر قبلی
+}
+
+function lastLetterBeforeBadge(img) {
+    let anchor = img;
+    if (!anchor.previousSibling && anchor.parentElement && anchor.parentElement.id === 'chat-header-tick') anchor = anchor.parentElement;
+    let n = anchor.previousSibling;
+    while (n) {
+        if (n.nodeType === 1 && n.classList.contains('verified-icon')) { n = n.previousSibling; continue; }
+        let last = n; while (last.lastChild) last = last.lastChild;
+        if (last.nodeType === 1 && last.tagName === 'IMG') return { ch: '', src: n }; // اسم با ایموجی تمام شده
+        const t = (n.textContent || '').replace(/[\s\u200c\u200d\u200e\u200f]+$/, '');
+        if (t) return { ch: Array.from(t).pop(), src: n };
+        n = n.previousSibling;
+    }
+    return { ch: '', src: null };
+}
+
+// بالا/پایین‌کردن همه‌ی تیک‌ها و ستاره‌ها با هم (پیکسل). مثبت = بالاتر، منفی = پایین‌تر
+const BADGE_LIFT_PX = 8;
+const BADGE_REF_YA = -.10; // وسط «ی» (تأییدشده)؛ بقیه‌ی حرف‌ها نسبت به آن از روی شکل واقعی فونت حساب می‌شوند
+let _bcCanvas = null;
+function alignBadge(img) {
+    const { ch, src } = lastLetterBeforeBadge(img);
+    let c = letterCenterEm(ch);
+    if (c === null) return;
+    const holder = (src && src.nodeType === 1) ? src : img.parentElement;
+    if (!holder) return;
+    const cs = getComputedStyle(holder);
+    const fs = parseFloat(cs.fontSize) || 16;
+    // فاصله‌ی خط پایه تا وسط خط (فونت‌های مختلف فرق دارند، پس از خود فونت اندازه می‌گیریم)
+    let baseBelowCenter = fs * 0.3;
+    try {
+        _bcCanvas = _bcCanvas || document.createElement('canvas');
+        const ctx = _bcCanvas.getContext('2d');
+        ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${fs}px ${cs.fontFamily}`;
+        const m = ctx.measureText('x');
+        if (m.fontBoundingBoxAscent) baseBelowCenter = (m.fontBoundingBoxAscent - m.fontBoundingBoxDescent) / 2;
+        // وسط واقعیِ شکل حرف در همین فونت (نسبت به «ی» که مرجع تنظیم‌شده است)
+        if (/[\u0600-\u06FF]/.test(ch) && ch !== 'ی') {
+            const mc = ctx.measureText(ch), mr = ctx.measureText('ی');
+            const cen = x => (x.actualBoundingBoxAscent - x.actualBoundingBoxDescent) / 2;
+            const v = BADGE_REF_YA + (cen(mc) - cen(mr)) / fs;
+            if (mc.width > 0 && isFinite(v)) c = v;
+        }
+    } catch (e) {}
+    const nudge = (img.getAttribute('src') || '').includes('blue-tick') ? 3 : 0; // تنظیم قبلیِ تیک آبی
+    const parentDisplay = img.parentElement ? getComputedStyle(img.parentElement).display : '';
+    if (parentDisplay.includes('flex')) {
+        img.style.top = (baseBelowCenter - c * fs + nudge - BADGE_LIFT_PX).toFixed(2) + 'px';
+        img.style.verticalAlign = '';
+    } else {
+        const isStar = img.classList.contains('star-icon');
+        const h = img.classList.contains('lg') ? (isStar ? 22 : 26) : (isStar ? 17 : 20);
+        img.style.top = nudge ? nudge + 'px' : '';
+        img.style.verticalAlign = (c * fs - h / 2 + BADGE_LIFT_PX).toFixed(2) + 'px';
+    }
+    img.setAttribute('data-vc', '1');
+}
+
+function alignAllBadges(root) {
+    (root || document).querySelectorAll('.verified-icon:not([data-vc])').forEach(alignBadge);
+}
+function realignAllBadges() {
+    document.querySelectorAll('.verified-icon[data-vc]').forEach(i => { i.removeAttribute('data-vc'); i.style.top = ''; i.style.verticalAlign = ''; });
+    alignAllBadges();
+}
+(function initBadgeAligner() {
+    const start = () => {
+        let queued = false;
+        new MutationObserver(() => {
+            if (queued) return; queued = true;
+            Promise.resolve().then(() => { queued = false; alignAllBadges(); });
+        }).observe(document.body, { childList: true, subtree: true });
+        alignAllBadges();
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(realignAllBadges);
+        let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(realignAllBadges, 200); });
+    };
+    if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
+})();
 
 // ========================
 // ایموجی‌های Fluent (فقط برای ری‌اکشن‌ها)
@@ -274,6 +400,7 @@ function load() {
         state.accounts.forEach(a => migrateBadge(a));
         state.posts.forEach(p => migrateBadge(p));
         state.aiPosts.forEach(p => migrateBadge(p));
+        syncOwnBadges();
         state.directMessages.forEach(m => {
             if (m.isVerified && !m.badgeType) m.badgeType = 'blue';
         });
@@ -971,14 +1098,15 @@ function openPostOptions(e, id) {
             menuHTML += `<div class="post-option-item" onclick="removeWarnSender('${post.id}')"><svg><use href="#i-close"/></svg> لغو اخطار دهنده</div>`;
         }
     } else {
-        if (!post.badgeType) {
+        if (!splitBadge(post.badgeType).tick) {
             menuHTML += `<div class="post-option-item" onclick="giveBadge('${post.id}', 'blue')">${getBadgeHTML('blue')} دادن نشان افراد سرشناس</div>`;
             menuHTML += `<div class="post-option-item" onclick="giveBadge('${post.id}', 'yellow')">${getBadgeHTML('yellow')} دادن نشان سازمانی</div>`;
             menuHTML += `<div class="post-option-item" onclick="giveBadge('${post.id}', 'green')">${getBadgeHTML('green')} دادن نشان تجاری</div>`;
             menuHTML += `<div class="post-option-item" onclick="giveBadge('${post.id}', 'personal')">${getBadgeHTML('personal')} دادن نشان شخصی</div>`;
         } else {
-            menuHTML += `<div class="post-option-item" onclick="removeBadge('${post.id}')">${getBadgeHTML(post.badgeType)} حذف نشان فعلی</div>`;
+            menuHTML += `<div class="post-option-item" onclick="removeBadge('${post.id}')">${getBadgeHTML(splitBadge(post.badgeType).tick)} حذف نشان فعلی</div>`;
         }
+        menuHTML += `<div class="post-option-item" onclick="toggleStar('${post.id}')">${getBadgeHTML('star')} ${isPremiumBadge(post.badgeType) ? 'برداشتن کاربر ویژه' : 'فعال‌کردن کاربر ویژه'}</div>`;
         
         menuHTML += `<div class="post-option-item danger" onclick="deletePost('${post.id}')"><svg><use href="#i-trash"/></svg> حذف ویراست</div>`;
         menuHTML += `<div class="post-option-item" onclick="openWarnModal('${post.id}')"><svg><use href="#i-alert"/></svg> اخطار به ارسال کننده</div>`;
@@ -1040,19 +1168,30 @@ function editPost(id) {
     document.getElementById('compose-modal').classList.add('show');
 }
 
+function syncOwnBadges() {
+    const owners = [state.user, ...(state.accounts || [])].filter(Boolean);
+    [...state.posts, ...state.aiPosts].forEach(p => {
+        const o = owners.find(a => a.handle === p.handle);
+        if (o) { p.badgeType = o.badgeType || null; p.isVerified = !!splitBadge(o.badgeType).tick; }
+    });
+}
+
+function applyBadgeToHandle(handle, badge) {
+    const v = !!splitBadge(badge).tick;
+    state.posts.forEach(p => { if (p.handle === handle) { p.isVerified = v; p.badgeType = badge; } });
+    state.aiPosts.forEach(p => { if (p.handle === handle) { p.isVerified = v; p.badgeType = badge; } });
+    if (state.user.handle === handle) { state.user.isVerified = v; state.user.badgeType = badge; }
+    const acc = state.accounts.find(a => a.handle === handle);
+    if (acc) { acc.isVerified = v; acc.badgeType = badge; }
+}
+
 function giveBadge(id, badgeType) {
     closePostOptions();
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
     if (!post) return;
     
     const badgeInfo = BADGE_TYPES[badgeType];
-    const handle = post.handle;
-    
-    state.posts.forEach(p => { if (p.handle === handle) { p.isVerified = true; p.badgeType = badgeType; } });
-    state.aiPosts.forEach(p => { if (p.handle === handle) { p.isVerified = true; p.badgeType = badgeType; } });
-    if (state.user.handle === handle) { state.user.isVerified = true; state.user.badgeType = badgeType; }
-    const acc = state.accounts.find(a => a.handle === handle);
-    if (acc) { acc.isVerified = true; acc.badgeType = badgeType; }
+    applyBadgeToHandle(post.handle, joinBadge(badgeType, splitBadge(post.badgeType).star));
     
     save(); renderFeeds(); renderProfile();
     showToast(`نشان "${badgeInfo.title}" به ${post.author} داده شد.`, 'success');
@@ -1063,16 +1202,20 @@ function removeBadge(id) {
     const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
     if (!post) return;
     
-    const handle = post.handle;
-    
-    state.posts.forEach(p => { if (p.handle === handle) { p.isVerified = false; p.badgeType = null; } });
-    state.aiPosts.forEach(p => { if (p.handle === handle) { p.isVerified = false; p.badgeType = null; } });
-    if (state.user.handle === handle) { state.user.isVerified = false; state.user.badgeType = null; }
-    const acc = state.accounts.find(a => a.handle === handle);
-    if (acc) { acc.isVerified = false; acc.badgeType = null; }
+    applyBadgeToHandle(post.handle, joinBadge(null, splitBadge(post.badgeType).star));
     
     save(); renderFeeds(); renderProfile();
     showToast(`نشان ${post.author} حذف شد.`, 'info');
+}
+
+function toggleStar(id) {
+    closePostOptions();
+    const post = [...state.posts, ...state.aiPosts].find(p => p.id == id);
+    if (!post) return;
+    const cur = splitBadge(post.badgeType);
+    applyBadgeToHandle(post.handle, joinBadge(cur.tick, !cur.star));
+    save(); renderFeeds(); renderProfile();
+    showToast(cur.star ? `قابلیت کاربر ویژه از ${post.author} برداشته شد.` : `${post.author} کاربر ویژه شد.`, cur.star ? 'info' : 'success');
 }
 
 function deletePost(id) {
@@ -1667,7 +1810,8 @@ document.getElementById('btn-edit-profile').addEventListener('click', (e) => {
     document.getElementById('edit-username').value = (u.handle || '').replace('@', '');
     document.getElementById('edit-following').value = u.following || 0;
     document.getElementById('edit-joined').value = u.joinedDate || getCurrentPersianDate();
-    document.getElementById('edit-badge-type').value = u.badgeType || '';
+    document.getElementById('edit-badge-type').value = splitBadge(u.badgeType).tick || '';
+    document.getElementById('edit-premium').value = splitBadge(u.badgeType).star ? '1' : '';
     
     document.getElementById('edit-cover-preview').style.backgroundImage = `url('${u.header || DEFAULT_HEADER}')`;
     document.getElementById('edit-avatar-preview').innerHTML = `<img src="${u.avatar || DEFAULT_AVATAR}" alt="Avatar"><label for="upload-avatar" class="edit-avatar-btn"><svg><use href="#i-image"/></svg></label><input type="file" id="upload-avatar" accept="image/*" hidden>`;
@@ -1705,7 +1849,8 @@ document.getElementById('btn-save-profile').addEventListener('click', (e) => {
     state.user.joinedDate = document.getElementById('edit-joined').value.trim() || getCurrentPersianDate();
     
     const badgeType = document.getElementById('edit-badge-type').value;
-    state.user.badgeType = badgeType || null;
+    const premium = document.getElementById('edit-premium').value === '1';
+    state.user.badgeType = joinBadge(badgeType, premium);
     state.user.isVerified = !!badgeType;
 
     const newUsernameInput = document.getElementById('edit-username').value.trim();
@@ -1721,6 +1866,7 @@ document.getElementById('btn-save-profile').addEventListener('click', (e) => {
     if (tempAvatar) state.user.avatar = tempAvatar;
     if (tempCover) state.user.header = tempCover;
 
+    syncOwnBadges();
     saveNow();
     renderProfile(); renderFeeds(); renderAccountList();
     document.getElementById('edit-profile-modal').classList.remove('show');
