@@ -613,26 +613,32 @@ svg { width: 24px; height: 24px; }
 #chat-input:disabled::placeholder{color:var(--text-secondary);opacity:1}
 
 
-/* ===== اخطار — مینیمال ===== */
-.fx-flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;font-size:13px}
-.fx-k{color:var(--text-secondary)}
-.fx-p{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.06);padding:3px 10px 3px 4px;border-radius:999px}
-.fx-p img{width:22px;height:22px;border-radius:50%;object-fit:cover}
-.fx-p b{font-weight:700;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fx-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
-.fx-chips button{padding:5px 11px;border-radius:999px;background:rgba(255,255,255,0.06);color:var(--text-secondary);font-size:12.5px;font-family:inherit;cursor:pointer}
-.fx-chips button.on{background:rgba(255,255,255,0.14);color:var(--text-primary)}
-#warn-reason{width:100%;background:transparent;border:1px solid var(--border-color);border-radius:12px;padding:10px 12px;color:inherit;font-family:inherit;font-size:14px;line-height:1.7;resize:none;outline:none}
-#warn-reason:focus{border-color:var(--accent-color)}
-.fx-sec{font-size:12px;color:var(--text-secondary);margin:12px 2px 6px}
-.fx-warn-err{color:#f91880;font-size:12.5px;margin-top:6px}
-.fx-wc{background:rgba(255,255,255,0.05);border:1px solid var(--border-color);border-right:3px solid #f91880;border-radius:12px;padding:10px 12px;text-align:right;font-size:13.5px;line-height:1.7}
-.fx-wc-h{display:flex;align-items:center;gap:6px;font-size:13px}
-.fx-wc-h svg{width:15px;height:15px;color:#f91880}
+/* ===== اخطار — مدرن و جمع‌وجور ===== */
+.fx-flow{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px}
+.fx-p{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.06);padding:4px 14px 4px 5px;border-radius:999px;font-size:13px;min-width:0}
+.fx-p img{width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.fx-p b{font-weight:700;max-width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fx-ar{color:var(--text-secondary);font-size:18px}
+.fx-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.fx-chips button{padding:6px 13px;border-radius:999px;background:rgba(255,255,255,0.06);color:var(--text-secondary);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;transition:all .18s}
+.fx-chips button.on{background:rgba(249,24,128,0.15);color:#ff6b9d}
+#warn-reason{width:100%;background:rgba(255,255,255,0.05);border:1px solid transparent;border-radius:16px;padding:11px 14px;color:inherit;font-family:inherit;font-size:14px;line-height:1.7;resize:none;outline:none;transition:border-color .18s}
+#warn-reason:focus{border-color:rgba(249,24,128,0.5)}
+.fx-sec{font-size:12px;color:var(--text-secondary);margin:16px 4px 8px}
+.fx-warn-err{color:#ff6b9d;font-size:12.5px;margin-top:8px}
+.fx-wc{display:flex;gap:12px;align-items:flex-start;background:rgba(255,255,255,0.06);border-radius:18px;padding:12px 14px;text-align:right}
+.fx-wc-ic{width:34px;height:34px;border-radius:50%;background:rgba(249,24,128,0.16);color:#ff6b9d;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.fx-wc-ic svg{width:18px;height:18px}
+.fx-wc-m{min-width:0;flex:1}
+.fx-wc-h{display:flex;align-items:baseline;gap:8px;font-size:14px}
 .fx-wc-h b{font-weight:800}
-.fx-wc-h span{color:var(--text-secondary);font-size:12px;margin-right:auto}
-.fx-wc-post{color:var(--text-secondary);margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fx-wc-r{font-size:13px}
-.fx-wc-r b{font-weight:700}
+.fx-wc-h span{color:var(--text-secondary);font-size:12px}
+.fx-wc-post{margin:6px 0 8px;padding:6px 10px;border-radius:10px;background:rgba(0,0,0,0.2);color:var(--text-secondary);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fx-wc-r{display:inline-block;padding:3px 11px;border-radius:999px;background:rgba(249,24,128,0.14);color:#ff6b9d;font-size:12.5px;font-weight:700}
 .chat-bubble.fx-warnbubble{background:transparent !important;padding:0 !important;box-shadow:none;border:none;max-width:85%}
 .fx-warnbubble .chat-time{padding:3px 4px 0}
+/* ⭐ کاربر ویژه + جای دقیق تیک/ستاره نسبت به آخرین حرف اسم (مقدار top را اسکریپت می‌گذارد) */
+.verified-icon.star-icon { margin-right: 2px; }
+.verified-icon[data-vc] { margin-bottom: 0; position: relative; }
+.verified-icon.star-icon { width: 17px; height: 17px; min-width: 17px; min-height: 17px; max-width: 17px; max-height: 17px; margin-right: -2px; }
+.verified-icon.star-icon.lg { width: 22px; height: 22px; min-width: 22px; min-height: 22px; max-width: 22px; max-height: 22px; margin-right: -2px; }
