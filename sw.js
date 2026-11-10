@@ -1,4 +1,4 @@
-const CACHE_NAME = 'Virasty-v1.0.4'; 
+const CACHE_NAME = 'VirastyApps-v1.0.2'; 
 
 const ASSETS = [
   './',
@@ -14,7 +14,7 @@ const ASSETS = [
   './yellow-tick.png',
   './green-tick.png',
   './personal-tick.png',
-  './shieldy.png',
+  './vip.png',
   './Font.ttf'
 ];
 
