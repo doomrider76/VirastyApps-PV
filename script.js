@@ -1,7 +1,7 @@
 // ========================
 // تنظیمات نسخه و بروزرسانی
 // ========================
-const APP_VERSION = '1.0.1'; 
+const APP_VERSION = '1.0.2'; 
 const CURRENT_VER_KEY = 'viraasti_app_version';
 
 function getPersianDate(ts = Date.now()) {
@@ -154,7 +154,7 @@ const BADGE_TYPES = {
 // 'blue' | 'blue+star' | 'star' | null
 const PREMIUM_CHAR_LIMIT = 500;
 const NORMAL_CHAR_LIMIT = 280;
-const STAR_SRC = 'star.png';
+const STAR_SRC = 'ShieldY.png';
 const STAR_TITLE = 'کاربر ویژه';
 
 function splitBadge(bt) {
@@ -258,14 +258,14 @@ function alignBadge(img) {
             if (mc.width > 0 && isFinite(v)) c = v;
         }
     } catch (e) {}
-    const nudge = (img.getAttribute('src') || '').includes('blue-tick') ? 3 : 0; // تنظیم قبلیِ تیک آبی
+    const nudge = /blue-tick|ShieldY/.test(img.getAttribute('src') || '') ? 3 : 0; // همان تنظیمِ تیک آبی برای سپر ویژه هم اعمال می‌شود
     const parentDisplay = img.parentElement ? getComputedStyle(img.parentElement).display : '';
     if (parentDisplay.includes('flex')) {
         img.style.top = (baseBelowCenter - c * fs + nudge - BADGE_LIFT_PX).toFixed(2) + 'px';
         img.style.verticalAlign = '';
     } else {
         const isStar = img.classList.contains('star-icon');
-        const h = img.classList.contains('lg') ? (isStar ? 22 : 26) : (isStar ? 17 : 20);
+        const h = img.classList.contains('lg') ? 26 : 20; // سپر هم‌اندازه‌ی تیک آبی
         img.style.top = nudge ? nudge + 'px' : '';
         img.style.verticalAlign = (c * fs - h / 2 + BADGE_LIFT_PX).toFixed(2) + 'px';
     }
@@ -2105,3 +2105,213 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('compose-highlight').scrollTop = this.scrollTop;
     });
 });
+
+// ========================
+// ℹ️ باکس توضیحات نشان‌ها (با کلیک روی تیک/سپر در پروفایل)
+// ========================
+const BADGE_INFO = {
+    blue: {
+        title: 'نشان افراد سرشناس',
+        lead: 'این نشان به چهره‌ها و افراد سرشناس داده می‌شود و نشان می‌دهد هویت این حساب بررسی و تأیید شده است.',
+        points: [
+            'هویت حساب تأیید‌شده است و کسی نمی‌تواند خودش را جای این فرد جا بزند.',
+            'کنار نام کاربر در ویراست‌ها، پاسخ‌ها، پیام‌ها و پروفایل نمایش داده می‌شود.',
+            'این نشان فقط جنبهٔ هویتی دارد و محدودیت نویسه‌ها را تغییر نمی‌دهد.'
+        ]
+    },
+    yellow: {
+        title: 'نشان سازمانی',
+        lead: 'این نشان برای سازمان‌ها، نهادها و مجموعه‌های رسمی است و نشان می‌دهد حساب متعلق به همان سازمان است.',
+        points: [
+            'رسمی‌بودن حساب سازمان یا نهاد تأیید شده است.',
+            'کنار نام حساب در همهٔ بخش‌های ویراستی نمایش داده می‌شود.',
+            'این نشان فقط جنبهٔ هویتی دارد و محدودیت نویسه‌ها را تغییر نمی‌دهد.'
+        ]
+    },
+    green: {
+        title: 'نشان تجاری',
+        lead: 'این نشان برای کسب‌وکارها و برندها است و نشان می‌دهد حساب، نمایندهٔ رسمی آن برند یا کسب‌وکار است.',
+        points: [
+            'اصالت حساب برند یا کسب‌وکار تأیید شده است.',
+            'کنار نام حساب در ویراست‌ها، پاسخ‌ها و پروفایل نمایش داده می‌شود.',
+            'این نشان فقط جنبهٔ هویتی دارد و محدودیت نویسه‌ها را تغییر نمی‌دهد.'
+        ]
+    },
+    personal: {
+        title: 'نشان شخصی',
+        lead: 'این نشان برای حساب‌های شخصیِ تأییدشده است و نشان می‌دهد صاحب حساب، همان فرد واقعی است.',
+        points: [
+            'هویت صاحب حساب بررسی و تأیید شده است.',
+            'کنار نام کاربر در همهٔ بخش‌های ویراستی نمایش داده می‌شود.',
+            'این نشان فقط جنبهٔ هویتی دارد و محدودیت نویسه‌ها را تغییر نمی‌دهد.'
+        ]
+    },
+    star: {
+        title: 'کاربر ویژه',
+        lead: 'سپر زرد نشان می‌دهد این حساب «کاربر ویژه» است و از امکانات بیشتر ویراستی استفاده می‌کند.',
+        points: [
+            `سقف نویسه‌ی هر ویراست و پاسخ ${PREMIUM_CHAR_LIMIT.toLocaleString('fa-IR')} نویسه است (کاربران عادی ${NORMAL_CHAR_LIMIT.toLocaleString('fa-IR')}).`,
+            'می‌تواند همراه با هر نوع تیک تأیید هم داشته باشد و کنار آن نمایش داده می‌شود.',
+            'در همهٔ ویراست‌ها، پاسخ‌ها و پیام‌ها کنار نام کاربر دیده می‌شود.'
+        ]
+    }
+};
+
+function badgeKeyFromImg(img) {
+    const src = (img.getAttribute('src') || '');
+    if (src === STAR_SRC || img.classList.contains('star-icon')) return 'star';
+    return Object.keys(BADGE_TYPES).find(k => BADGE_TYPES[k].src === src) || null;
+}
+
+function closeBadgeInfo() {
+    const m = document.getElementById('badge-info-modal');
+    if (m) m.classList.remove('show');
+}
+
+function openBadgeInfo(key) {
+    const info = BADGE_INFO[key];
+    if (!info) return;
+    const iconSrc = key === 'star' ? STAR_SRC : BADGE_TYPES[key].src;
+    let m = document.getElementById('badge-info-modal');
+    if (!m) {
+        m = document.createElement('div');
+        m.id = 'badge-info-modal';
+        m.className = 'modal-overlay';
+        m.addEventListener('click', e => { if (e.target === m) closeBadgeInfo(); });
+        document.body.appendChild(m);
+    }
+    m.innerHTML = `
+        <div class="modal-content badge-info-content" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <span class="modal-title">درباره‌ی این نشان</span>
+                <button type="button" class="icon-btn" aria-label="بستن" onclick="closeBadgeInfo()" style="font-size:22px;line-height:1;">×</button>
+            </div>
+            <div class="badge-info-body">
+                <div class="badge-info-head">
+                    <img src="${iconSrc}" alt="">
+                    <h3>${info.title}</h3>
+                </div>
+                <p class="badge-info-lead">${info.lead}</p>
+                <div class="badge-info-sub">امکانات و ویژگی‌ها</div>
+                <ul class="badge-info-list">${info.points.map(p => `<li>${p}</li>`).join('')}</ul>
+                <button type="button" class="btn-primary badge-info-ok" onclick="closeBadgeInfo()">متوجه شدم</button>
+            </div>
+        </div>`;
+    requestAnimationFrame(() => m.classList.add('show'));
+}
+
+// فقط تیک‌ها و سپرِ کنار نام در بخش پروفایل (پروفایل خودم و پروفایل دیگران)
+document.addEventListener('click', function (e) {
+    const img = e.target.closest && e.target.closest('.profile-name .verified-icon');
+    if (!img) return;
+    const key = badgeKeyFromImg(img);
+    if (!key) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openBadgeInfo(key);
+}, true);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBadgeInfo(); });
+
+
+// ========================
+// 📍 جای منوی سه‌نقطه روی کامپیوتر: کنار همان دکمه (روی موبایل شیت پایین می‌ماند)
+// ========================
+(function initPostMenuPopover() {
+    const desk = () => window.matchMedia('(hover: hover) and (min-width: 700px)').matches;
+    let anchor = null, at = 0;
+    document.addEventListener('click', e => {
+        const b = e.target.closest && e.target.closest('.post-more-btn');
+        if (b) { anchor = b.getBoundingClientRect(); at = Date.now(); }
+    }, true);
+    const place = () => {
+        const m = document.getElementById('post-options-menu');
+        if (!m || !m.classList.contains('show')) return;
+        if (!desk() || !anchor || Date.now() - at > 800) { m.style.top = m.style.left = m.style.maxHeight = ''; return; }
+        const vw = innerWidth, vh = innerHeight, w = m.offsetWidth;
+        m.style.maxHeight = Math.min(vh - 16, vh * .6) + 'px';
+        const h = m.offsetHeight;
+        let left = anchor.left + anchor.width / 2 - w / 2;
+        left = Math.max(8, Math.min(left, vw - w - 8));
+        let top = anchor.bottom + 6;
+        if (top + h > vh - 8) top = Math.max(8, anchor.top - h - 6);
+        m.style.left = left + 'px'; m.style.top = top + 'px';
+    };
+    window.__pmPlace = place;
+    const start = () => {
+        const m = document.getElementById('post-options-menu');
+        if (!m) return;
+        new MutationObserver(place).observe(m, { attributes: true, attributeFilter: ['class'] });
+        window.addEventListener('scroll', ev => { if (ev.target !== m && desk() && m.classList.contains('show')) closePostOptions(); }, true);
+        window.addEventListener('resize', () => { if (m.classList.contains('show')) closePostOptions(); });
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+
+
+// ========================
+// 🗂️ دسته‌بندی منوی سه‌نقطه: اول فقط دسته‌ها دیده می‌شوند، با کلیک گزینه‌های همان دسته
+// ========================
+(function initPostMenuCategories() {
+    const CATS = {
+        safe:  { title: 'گزارش و حریم خصوصی', sub: 'گزارش، بلاک و میوت', icon: 'alert', color: 'c-orange' },
+        badge: { title: 'نشان‌ها', sub: 'تیک تأیید و کاربر ویژه', icon: 'user', color: 'c-purple' },
+        admin: { title: 'مدیریت', sub: 'اخطار، بن و حذف', icon: 'ban', color: 'c-red' }
+    };
+    const kindOf = t => /گزارش|بلاک|میوت/.test(t) ? 'safe'
+        : /نشان|کاربر ویژه/.test(t) ? 'badge'
+        : /اخطار|بن اکانت|\(مدیر\)/.test(t) ? 'admin' : 'own';
+    const fa = n => Number(n).toLocaleString('fa-IR');
+
+    function build(m) {
+        const items = Array.from(m.querySelectorAll(':scope > .post-option-item'));
+        const cancel = items.find(i => i.classList.contains('post-option-cancel'));
+        const acts = items.filter(i => i !== cancel);
+        if (!acts.length) return;
+        const groups = { own: [], safe: [], badge: [], admin: [] };
+        acts.forEach(i => groups[kindOf(i.textContent)].push(i));
+
+        m.innerHTML = '';
+        const mkGroup = list => { const g = document.createElement('div'); g.className = 'pm-group'; list.forEach(i => g.appendChild(i)); return g; };
+
+        const used = Object.keys(CATS).filter(k => groups[k].length);
+        // منوی کوتاه (مثلاً ویراست خودم): همه در یک کارت، بدون دسته‌بندی
+        if (acts.length <= 4 || (used.length <= 1 && !groups.own.length)) {
+            const v = document.createElement('div'); v.className = 'pm-view';
+            v.appendChild(mkGroup(acts)); m.appendChild(v);
+        } else {
+            const home = document.createElement('div'); home.className = 'pm-view pm-home';
+            if (groups.own.length) home.appendChild(mkGroup(groups.own));
+            const catBox = document.createElement('div'); catBox.className = 'pm-group';
+            const subs = [];
+            used.forEach(k => {
+                const d = CATS[k], list = groups[k];
+                const row = document.createElement('div'); row.className = 'pm-cat'; row.setAttribute('role', 'button');
+                row.innerHTML = `<span class="pm-ic ${d.color}"><svg><use href="#i-${d.icon}"/></svg></span>
+                    <span class="pm-txt"><b>${d.title}</b><small>${d.sub}</small></span>
+                    <span class="pm-count">${fa(list.length)}</span>
+                    <svg class="pm-chev"><use href="#i-back"/></svg>`;
+                const sub = document.createElement('div'); sub.className = 'pm-view pm-sub'; sub.hidden = true;
+                const head = document.createElement('div'); head.className = 'pm-head';
+                head.innerHTML = `<button type="button" class="pm-back" aria-label="بازگشت"><svg><use href="#i-back"/></svg></button><b>${d.title}</b>`;
+                sub.appendChild(head); sub.appendChild(mkGroup(list));
+                row.addEventListener('click', e => { e.stopPropagation(); home.hidden = true; sub.hidden = false; });
+                head.querySelector('.pm-back').addEventListener('click', e => { e.stopPropagation(); sub.hidden = true; home.hidden = false; });
+                catBox.appendChild(row); subs.push(sub);
+            });
+            home.appendChild(catBox);
+            m.appendChild(home); subs.forEach(s => m.appendChild(s));
+        }
+        if (cancel) m.appendChild(cancel);
+        if (window.__pmPlace) window.__pmPlace(); // بعد از ساخت دسته‌ها دوباره جای پاپ‌اور را حساب کن
+    }
+
+    const start = () => {
+        const m = document.getElementById('post-options-menu');
+        if (!m) return;
+        new MutationObserver(() => {
+            // فقط وقتی آیتم‌های خام (تازه‌ساخته‌شده) مستقیم داخل منو هستند
+            if (m.querySelector(':scope > .post-option-item:not(.post-option-cancel)')) build(m);
+        }).observe(m, { childList: true });
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
