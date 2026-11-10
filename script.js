@@ -1,7 +1,7 @@
 // ========================
 // تنظیمات نسخه و بروزرسانی
 // ========================
-const APP_VERSION = '1.0.2'; 
+const APP_VERSION = '1.0.3'; 
 const CURRENT_VER_KEY = 'viraasti_app_version';
 
 function getPersianDate(ts = Date.now()) {
