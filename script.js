@@ -154,7 +154,7 @@ const BADGE_TYPES = {
 // 'blue' | 'blue+star' | 'star' | null
 const PREMIUM_CHAR_LIMIT = 500;
 const NORMAL_CHAR_LIMIT = 280;
-const STAR_SRC = 'ShieldY.png';
+const STAR_SRC = 'shieldy.png';
 const STAR_TITLE = 'کاربر ویژه';
 
 function splitBadge(bt) {
@@ -258,7 +258,7 @@ function alignBadge(img) {
             if (mc.width > 0 && isFinite(v)) c = v;
         }
     } catch (e) {}
-    const nudge = /blue-tick|ShieldY/.test(img.getAttribute('src') || '') ? 3 : 0; // همان تنظیمِ تیک آبی برای سپر ویژه هم اعمال می‌شود
+    const nudge = /blue-tick|shieldy/.test(img.getAttribute('src') || '') ? 3 : 0; // همان تنظیمِ تیک آبی برای سپر ویژه هم اعمال می‌شود
     const parentDisplay = img.parentElement ? getComputedStyle(img.parentElement).display : '';
     if (parentDisplay.includes('flex')) {
         img.style.top = (baseBelowCenter - c * fs + nudge - BADGE_LIFT_PX).toFixed(2) + 'px';
