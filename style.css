@@ -495,18 +495,33 @@ svg { width: 24px; height: 24px; }
 
 .new-chat-user-handle { font-size: 12px; color: var(--text-secondary); }
 
-#update-modal { align-items: flex-end; padding: 0; }
-.update-modal-content { background: var(--glass-bg); backdrop-filter: blur(30px) saturate(200%); -webkit-backdrop-filter: blur(30px) saturate(200%); border: 1px solid var(--glass-border); border-bottom: none; border-radius: 24px 24px 0 0; box-shadow: none; padding: 24px 24px 32px; text-align: center; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); max-width: 100%; }
+/* ============================================
+   منوی بروزرسانی (هماهنگ با تم تیره/روشن)
+   ============================================ */
+#update-modal { align-items: flex-end; padding: 0; background: rgba(6, 10, 16, 0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+:root[data-theme="light"] #update-modal { background: rgba(15, 20, 25, 0.35); }
+.update-modal-content {
+    position: relative;
+    background: linear-gradient(180deg, var(--accent-soft) 0%, transparent 180px), var(--card-bg);
+    border: 1px solid var(--border-color); border-bottom: none;
+    border-radius: 28px 28px 0 0; box-shadow: none;
+    padding: 14px 20px calc(24px + env(safe-area-inset-bottom, 0px));
+    text-align: center; max-width: 100%; max-height: 88vh; overflow-y: auto;
+    transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
 #update-modal.show .update-modal-content { transform: translateY(0); }
-.bottom-sheet-handle { width: 40px; height: 5px; background: rgba(255, 255, 255, 0.2); border-radius: 10px; margin: 0 auto 20px auto; }
-.update-icon { font-size: 50px; margin-bottom: 12px; }
-.update-modal-content h2 { font-size: 22px; font-weight: 900; margin-bottom: 8px; color: var(--accent-color); }
-.update-modal-content p { font-size: 15px; color: var(--text-secondary); margin-bottom: 16px; }
-.changelog { text-align: right; background: rgba(0,0,0,0.2); padding: 16px 20px; border-radius: 12px; margin-bottom: 24px; font-size: 14px; line-height: 1.8; color: var(--text-primary); list-style: none; }
-.changelog li { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
-.changelog li:last-child { margin-bottom: 0; }
-.changelog .emoji-img { margin-top: 4px; flex-shrink: 0; }
-.update-actions { display: flex; gap: 12px; justify-content: center; }
+.bottom-sheet-handle { width: 40px; height: 5px; background: var(--text-secondary); opacity: 0.35; border-radius: 10px; margin: 0 auto 18px auto; }
+.update-icon { width: 68px; height: 68px; margin: 0 auto 12px; border-radius: 22px; display: flex; align-items: center; justify-content: center; font-size: 34px; background: var(--accent-soft); border: 1px solid var(--accent-color); }
+.update-version { display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: .5px; color: var(--accent-color); background: var(--accent-soft); border: 1px solid var(--accent-color); padding: 2px 12px; border-radius: 20px; margin-bottom: 10px; }
+.update-modal-content h2 { font-size: 21px; font-weight: 900; margin-bottom: 6px; color: var(--text-primary); }
+.update-modal-content p { font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; }
+.changelog { text-align: right; background: var(--bg-color); border: 1px solid var(--divider); padding: 6px 14px; border-radius: 16px; margin-bottom: 20px; font-size: 14px; line-height: 1.7; color: var(--text-primary); list-style: none; max-height: 36vh; overflow-y: auto; }
+.changelog li { display: flex; align-items: center; gap: 10px; padding: 10px 0; margin: 0; border-bottom: 1px solid var(--divider); font-weight: 600; }
+.changelog li:last-child { border-bottom: none; }
+.changelog .emoji-img { width: 20px; height: 20px; margin: 0; flex-shrink: 0; }
+.update-actions { display: flex; gap: 10px; justify-content: center; }
+.update-actions .btn-primary { flex: 2; }
+.update-actions .btn-secondary { flex: 1; }
 .update-actions button { flex: 1; padding: 14px; font-size: 16px; border-radius: 16px; }
 
 #toast-container { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; width: 90%; max-width: 400px; }
@@ -658,10 +673,10 @@ svg { width: 24px; height: 24px; }
 .chat-bubble.fx-warnbubble{background:transparent !important;padding:0 !important;box-shadow:none;border:none;max-width:85%}
 .fx-warnbubble .chat-time{padding:3px 4px 0}
 /* ⭐ کاربر ویژه + جای دقیق تیک/ستاره نسبت به آخرین حرف اسم (مقدار top را اسکریپت می‌گذارد) */
-.verified-icon.star-icon { margin-right: 2px; }
+.verified-icon.star-icon { margin-right: -2px; }
 .verified-icon[data-vc] { margin-bottom: 0; position: relative; }
-.verified-icon.star-icon { width: 17px; height: 17px; min-width: 17px; min-height: 17px; max-width: 17px; max-height: 17px; margin-right: -2px; }
-.verified-icon.star-icon.lg { width: 22px; height: 22px; min-width: 22px; min-height: 22px; max-width: 22px; max-height: 22px; margin-right: -2px; }
+/* 🛡️ سپر کاربر ویژه: هم‌اندازه و هم‌تراز با تیک آبی (۲۰px / lg: ۲۶px) */
+.verified-icon[src*="ShieldY"] { position: relative; top: 3px; }
 /* ============================================
    تم روشن
    ============================================ */
@@ -786,4 +801,121 @@ button.set-row:active { background: var(--w05); }
     bottom: 12px !important;
     height: 58px !important;
     padding: 6px 8px !important;
+}
+
+/* رنگ منوی دایره‌ای بالا (اولی) و منوی دایره‌ای پایین */
+.top-header,
+.bottom-nav {
+    background: rgba(22, 43, 60, 0.5) !important; /* #162b3c با ۵۰٪ شفافیت */
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
+
+/* رنگ منوی دایره‌ای تب‌ها (دنبال شده‌ها / برای شما) */
+.top-tabs {
+    background: rgba(22, 32, 42, 0.5) !important; /* #16202a با ۵۰٪ شفافیت */
+    backdrop-filter: blur(20px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
+/* ℹ️ باکس توضیحات نشان‌ها در پروفایل */
+.profile-name .verified-icon { cursor: pointer; }
+.badge-info-content { max-width: 420px; }
+.badge-info-body { padding: 16px 18px 18px; text-align: right; }
+.badge-info-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.badge-info-head img { width: 34px; height: 34px; object-fit: contain; flex-shrink: 0; }
+.badge-info-head h3 { font-size: 18px; font-weight: 800; margin: 0; }
+.badge-info-lead { font-size: 14.5px; line-height: 1.9; color: var(--text-secondary); margin: 0 0 14px; }
+.badge-info-sub { font-size: 13px; font-weight: 800; margin-bottom: 6px; }
+.badge-info-list { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.badge-info-list li { position: relative; padding-right: 18px; font-size: 14px; line-height: 1.8; }
+.badge-info-list li::before { content: ""; position: absolute; right: 0; top: 11px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent-color); }
+.badge-info-ok { width: 100%; padding: 10px 0; }
+
+/* ============================================
+   منوی سه‌نقطه‌ی ویراست — کوتاه و هماهنگ با طراحی جدید (کارت‌های گروهی تنظیمات)
+   ============================================ */
+.post-options-menu {
+    background: var(--card-bg); backdrop-filter: none; -webkit-backdrop-filter: none;
+    border: 1px solid var(--divider); border-bottom: none; border-radius: 22px 22px 0 0;
+    padding: 8px 12px 14px; gap: 0; max-height: 62vh; box-shadow: 0 -8px 30px rgba(0, 0, 0, .25);
+    transition: transform .25s cubic-bezier(.2, .8, .2, 1);
+}
+.post-options-menu::before { content: ''; align-self: center; width: 36px; height: 4px; border-radius: 4px; background: var(--w10); margin: 2px 0 8px; flex-shrink: 0; }
+.post-option-item {
+    position: relative; gap: 12px; min-height: 42px; padding: 8px 10px; border-radius: 0;
+    font-size: 14.5px; font-weight: 600; background: transparent; flex-shrink: 0;
+}
+.post-option-item:hover, .post-option-item:active { background: var(--w05); }
+.post-option-item svg { width: 18px; height: 18px; opacity: .9; }
+.post-option-item .verified-icon { width: 18px; height: 18px; min-width: 18px; min-height: 18px; max-width: 18px; max-height: 18px; margin: 0; top: 0; vertical-align: baseline; }
+.post-option-item:not(:last-child):not(.post-option-cancel)::after {
+    content: ''; position: absolute; bottom: 0; right: 40px; left: 0; height: 1px; background: var(--divider);
+}
+.post-option-item.danger { color: #ff453a; }
+.post-option-item.danger:hover { background: rgba(255, 69, 58, .1); }
+.post-option-cancel {
+    justify-content: center; min-height: 40px; margin-top: 8px; border: none; border-radius: 12px;
+    background: var(--w06); color: var(--text-secondary); font-size: 14px;
+}
+.post-option-cancel:hover { background: var(--w10); color: var(--text-primary); }
+
+/* کامپیوتر: پاپ‌اور کوچک کنار دکمه‌ی سه‌نقطه به‌جای شیت تمام‌عرض */
+@media (hover: hover) and (min-width: 700px) {
+    .post-options-menu {
+        right: auto; bottom: auto; top: 80px; left: calc(50% - 130px); width: 260px; max-height: 60vh;
+        padding: 6px; border: 1px solid var(--border-color); border-radius: 16px; transform: none;
+        box-shadow: 0 10px 32px rgba(0, 0, 0, .35);
+    }
+    .post-options-menu::before, .post-option-cancel { display: none; }
+    .post-options-menu.show { animation: fxPop .14s ease-out; transform-origin: top; }
+    .post-option-item { min-height: 38px; font-size: 14px; border-radius: 10px; padding: 7px 10px; }
+}
+@keyframes fxPop { from { opacity: 0; transform: scale(.96) translateY(-4px); } to { opacity: 1; transform: none; } }
+:root[data-theme="light"] .post-options-menu { box-shadow: 0 8px 28px rgba(15, 20, 25, .18); }
+
+/* ============================================
+   منوی سه‌نقطه — نسخه‌ی دسته‌بندی‌شده (اول دسته‌ها، با کلیک گزینه‌های همان دسته)
+   ============================================ */
+.post-options-menu { background: var(--card-bg); border-radius: 26px 26px 0 0; padding: 8px 14px 16px; }
+.pm-view { display: flex; flex-direction: column; gap: 10px; animation: pmIn .22s cubic-bezier(.2, .8, .2, 1); }
+.pm-view[hidden] { display: none; }
+@keyframes pmIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+.pm-view.pm-sub { animation-name: pmInSub; }
+@keyframes pmInSub { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
+.pm-title { font-size: 12.5px; font-weight: 700; color: var(--text-secondary); margin: 4px 10px 0; letter-spacing: .2px; }
+.pm-group { background: var(--w05); border: 1px solid var(--divider); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; }
+.pm-group .post-option-item { background: transparent; }
+.pm-group .post-option-item:hover, .pm-group .post-option-item:active { background: var(--w06); }
+
+.pm-cat { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 8px 12px; text-align: right; color: var(--text-primary); cursor: pointer; transition: background .15s; }
+.pm-cat:hover, .pm-cat:active { background: var(--w06); }
+.pm-cat:not(:last-child)::after { content: ''; position: absolute; bottom: 0; right: 62px; left: 0; height: 1px; background: var(--divider); }
+.pm-ic { width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 3px 10px rgba(0, 0, 0, .2); }
+.pm-ic svg { width: 19px; height: 19px; stroke: #fff; }
+.pm-ic.c-blue { background: linear-gradient(145deg, #4cb4ff, #1d7fe0); }
+.pm-ic.c-orange { background: linear-gradient(145deg, #ffb340, #ff8a00); }
+.pm-ic.c-purple { background: linear-gradient(145deg, #a78bfa, #7c4dff); }
+.pm-ic.c-red { background: linear-gradient(145deg, #ff6b61, #e8352b); }
+.pm-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.5; }
+.pm-txt b { font-size: 15px; font-weight: 700; }
+.pm-txt small { font-size: 12px; font-weight: 500; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pm-count { min-width: 22px; height: 22px; padding: 0 7px; border-radius: 11px; background: var(--accent-soft); color: var(--accent-color); font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.pm-chev { width: 18px; height: 18px; color: var(--text-secondary); opacity: .7; flex-shrink: 0; }
+
+.pm-head { display: flex; align-items: center; gap: 10px; padding: 2px 2px 0; }
+.pm-back { width: 34px; height: 34px; border-radius: 50%; background: var(--w06); color: var(--text-primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .15s; }
+.pm-back:hover { background: var(--w10); }
+.pm-back svg { width: 18px; height: 18px; transform: rotate(180deg); }
+.pm-head b { font-size: 16px; font-weight: 800; }
+
+@media (hover: hover) and (min-width: 700px) {
+    .post-options-menu { width: 288px; padding: 8px; border-radius: 20px; }
+    .pm-cat { min-height: 54px; }
+}
+
+/* منوی سه‌نقطه: پس‌زمینه‌ی ۵۰٪ شفاف با محو‌کردن پشت منو */
+.post-options-menu {
+    background: color-mix(in srgb, var(--card-bg) 50%, transparent);
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
 }
